@@ -7,12 +7,17 @@ class Settings(BaseSettings):
     API_VERSION: str = "0.0.1"
     API_TITLE: str = "Odoo Expert API"
     API_DESCRIPTION: str = "API for querying Odoo documentation with RAG-powered responses"
-    
-    # OpenAI Settings
+
+    # Model Provider Settings
+    MODEL_PROVIDER: str = "ollama"
+
+    # Model Settings
     OPENAI_API_KEY: str
     OPENAI_API_BASE: str
     LLM_MODEL: str = "gpt-4o"
     EMBEDDING_MODEL: str
+    OLLAMA_BASE_URL: str
+    OLLAMA_REQUEST_TIMEOUT: int
 
     # PostgreSQL Settings
     POSTGRES_USER: str = "postgres"  # Changed default to match your config

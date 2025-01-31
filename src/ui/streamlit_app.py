@@ -14,6 +14,7 @@ from src.config.settings import settings
 from src.utils.logging import logger
 from openai import AsyncOpenAI
 from src.core.services.db_service import DatabaseService
+from llama_index.llms.ollama.base import DEFAULT_REQUEST_TIMEOUT, Ollama
 
 class StreamlitUI:
     def __init__(self):
@@ -23,10 +24,15 @@ class StreamlitUI:
         )
         self.db_service = DatabaseService()
         self.embedding_service = EmbeddingService(self.openai_client)
+        request_timeout = float(
+            settings.OLLAMA_REQUEST_TIMEOUT or DEFAULT_REQUEST_TIMEOUT
+        )
+        self.ollama_llm = Ollama(model=settings.LLM_MODEL, request_timeout=request_timeout)
         self.chat_service = ChatService(
             self.openai_client,
             self.db_service,
-            self.embedding_service
+            self.embedding_service,
+            self.ollama_llm
         )
     
     async def cleanup(self):
@@ -65,7 +71,7 @@ class StreamlitUI:
                 response_placeholder = st.empty()
                 response_placeholder.markdown("Searching documentation...")
 
-            query = await self.chat_service.generate_translation(query)
+            query = self.chat_service.generate_translation(query)
             print('Translate in English:', query)
 
             # Get relevant chunks
@@ -99,11 +105,8 @@ class StreamlitUI:
                 #             full_response += delta.content
                 #             response_placeholder.markdown(full_response)
 
-                for i, generations in enumerate(response.generations):
-                    for generation in generations:
-                        print(generation.text)
-                        full_response += generation.text
-                        response_placeholder.markdown(full_response)
+                full_response += response
+                response_placeholder.markdown(full_response)
 
                 if full_response:
                     # Add to conversation history only if we got a valid response
